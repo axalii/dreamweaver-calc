@@ -9,7 +9,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, For
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import SleepQualityChart from './SleepQualityChart';
 import { useSleepRecords } from '@/hooks/use-sleep-records';
@@ -38,7 +38,7 @@ export type SleepRecord = z.infer<typeof sleepRecordSchema>;
 
 const SleepTracker = () => {
   const { toast } = useToast();
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const isMobile = useIsMobile();
   const { records, addRecord } = useSleepRecords();
   
   const form = useForm<z.infer<typeof sleepRecordSchema>>({
@@ -214,7 +214,7 @@ const SleepTracker = () => {
               </h3>
             </div>
             <div className="p-6">
-              {isDesktop ? (
+              {!isMobile ? (
                 <Dialog>
                   <DialogTrigger asChild>
                     <button className="w-full py-4 glass-light hover:bg-white/10 transition-colors rounded-lg flex items-center justify-center space-x-2">
