@@ -4,6 +4,7 @@ import Hero from '@/components/Hero';
 import NavBar from '@/components/NavBar';
 import SleepCalculator from '@/components/SleepCalculator';
 import SleepCycles from '@/components/SleepCycles';
+import SleepTracker from '@/components/SleepTracker';
 import Footer from '@/components/Footer';
 
 const Index = () => {
@@ -13,6 +14,7 @@ const Index = () => {
       <Hero />
       <SleepCalculator />
       <SleepCycles />
+      <SleepTracker />
       <Footer />
     </main>
   );

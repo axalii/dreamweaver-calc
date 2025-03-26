@@ -67,6 +67,30 @@
   .input-glass {
     @apply bg-secondary/60 backdrop-blur-md border border-white/10 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground;
   }
+
+  .chart-container {
+    @apply h-64 w-full bg-secondary/30 rounded-lg overflow-hidden;
+  }
+  
+  .quality-badge {
+    @apply px-2 py-1 rounded-full text-xs inline-flex items-center;
+  }
+  
+  .quality-poor {
+    @apply bg-destructive/20 text-destructive;
+  }
+  
+  .quality-fair {
+    @apply bg-primary/20 text-primary;
+  }
+  
+  .quality-good {
+    @apply bg-accent/20 text-accent;
+  }
+  
+  .quality-excellent {
+    @apply bg-green-500/20 text-green-500;
+  }
 }
 
 @layer utilities {
@@ -84,5 +108,50 @@
   
   .transition-all-500 {
     @apply transition-all duration-500;
+  }
+  
+  /* Animation utilities */
+  .animate-slide-down {
+    animation: slideDown 0.5s ease-out forwards;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulseSlow 2s infinite;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulseSlow {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
   }
 }

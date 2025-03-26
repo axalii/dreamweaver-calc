@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Moon } from 'lucide-react';
+import { Moon, BarChart } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -26,6 +26,12 @@ const Footer = () => {
               className="mb-4 md:mb-0 text-muted-foreground hover:text-foreground transition-all-200"
             >
               Sleep Cycles
+            </a>
+            <a 
+              href="#tracker" 
+              className="mb-4 md:mb-0 text-muted-foreground hover:text-foreground transition-all-200"
+            >
+              Sleep Tracker
             </a>
             <a 
               href="#" 
