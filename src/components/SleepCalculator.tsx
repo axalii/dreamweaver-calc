@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Moon, Sun, ArrowRight } from 'lucide-react';
 import TimeInput from './TimeInput';
 import { 
@@ -10,23 +10,43 @@ import {
 } from '@/utils/sleepUtils';
 
 const SleepCalculator = () => {
-  const [calculationType, setCalculationType] = useState<'bedtime' | 'wakeup'>('bedtime');
+  const [calculationType, setCalculationType] = useState<'bedtime' | 'wakeup' | 'now'>('bedtime');
   const [wakeUpTime, setWakeUpTime] = useState<SleepTime>({ hours: 7, minutes: 0 });
   const [bedtime, setBedtime] = useState<SleepTime>({ hours: 22, minutes: 30 });
+  const [currentTime, setCurrentTime] = useState<SleepTime>({ hours: 0, minutes: 0 });
   const [results, setResults] = useState<SleepTime[]>([]);
   const [hasCalculated, setHasCalculated] = useState(false);
+
+  // Set the current time when component mounts and when "If I sleep now" is selected
+  useEffect(() => {
+    if (calculationType === 'now') {
+      updateCurrentTime();
+    }
+  }, [calculationType]);
+
+  const updateCurrentTime = () => {
+    const now = new Date();
+    setCurrentTime({
+      hours: now.getHours(),
+      minutes: now.getMinutes()
+    });
+  };
 
   const handleCalculate = () => {
     if (calculationType === 'bedtime') {
       setResults(calculateBedTimes(wakeUpTime));
-    } else {
+    } else if (calculationType === 'wakeup') {
       setResults(calculateWakeUpTimes(bedtime));
+    } else if (calculationType === 'now') {
+      // If "If I sleep now" is selected, calculate wake-up times using the current time
+      updateCurrentTime(); // Refresh current time right before calculation
+      setResults(calculateWakeUpTimes(currentTime));
     }
     setHasCalculated(true);
   };
 
-  const toggleCalculationType = () => {
-    setCalculationType(calculationType === 'bedtime' ? 'wakeup' : 'bedtime');
+  const toggleCalculationType = (type: 'bedtime' | 'wakeup' | 'now') => {
+    setCalculationType(type);
     setHasCalculated(false);
   };
 
@@ -42,14 +62,12 @@ const SleepCalculator = () => {
         </div>
 
         <div className="glass rounded-2xl overflow-hidden shadow-xl animate-fade-in opacity-0" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
-          <div className="flex justify-between p-5 glass border-b border-white/10">
+          <div className="flex flex-wrap justify-between p-5 glass border-b border-white/10">
             <button 
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all-200 ${
                 calculationType === 'bedtime' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
-              onClick={() => {
-                if (calculationType !== 'bedtime') toggleCalculationType();
-              }}
+              onClick={() => toggleCalculationType('bedtime')}
             >
               <Moon size={18} className={calculationType === 'bedtime' ? 'text-primary' : 'text-muted-foreground'} />
               <span>I want to wake up at...</span>
@@ -59,30 +77,51 @@ const SleepCalculator = () => {
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all-200 ${
                 calculationType === 'wakeup' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
-              onClick={() => {
-                if (calculationType !== 'wakeup') toggleCalculationType();
-              }}
+              onClick={() => toggleCalculationType('wakeup')}
             >
               <Sun size={18} className={calculationType === 'wakeup' ? 'text-primary' : 'text-muted-foreground'} />
               <span>I want to go to bed at...</span>
             </button>
+
+            <button 
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all-200 ${
+                calculationType === 'now' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => toggleCalculationType('now')}
+            >
+              <Sun size={18} className={calculationType === 'now' ? 'text-primary' : 'text-muted-foreground'} />
+              <span>If I sleep now...</span>
+            </button>
           </div>
           
           <div className="p-6">
-            {calculationType === 'bedtime' ? (
+            {calculationType === 'bedtime' && (
               <TimeInput 
                 id="wakeup-time"
                 label="What time do you want to wake up?"
                 value={wakeUpTime}
                 onChange={setWakeUpTime}
               />
-            ) : (
+            )}
+            
+            {calculationType === 'wakeup' && (
               <TimeInput 
                 id="bedtime"
                 label="What time do you want to go to bed?"
                 value={bedtime}
                 onChange={setBedtime}
               />
+            )}
+
+            {calculationType === 'now' && (
+              <div className="py-3">
+                <p className="text-center text-lg">
+                  Current time: <span className="font-medium">{formatTime(currentTime.hours, currentTime.minutes)}</span>
+                </p>
+                <p className="text-muted-foreground text-center text-sm mt-2">
+                  We'll calculate the best times to wake up if you fall asleep now.
+                </p>
+              </div>
             )}
             
             <button 
@@ -114,11 +153,13 @@ const SleepCalculator = () => {
                           {formatTime(time.hours, time.minutes)}
                         </p>
                         <p className="text-muted-foreground text-sm">
-                          {6 - index} sleep cycles • {(6 - index) * 1.5} hours of sleep
+                          {calculationType === 'bedtime' 
+                            ? `${6 - index} sleep cycles • ${(6 - index) * 1.5} hours of sleep`
+                            : `${index + 4} sleep cycles • ${(index + 4) * 1.5} hours of sleep`}
                         </p>
                       </div>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getQualityColor(6 - index)}`}>
-                        {6 - index}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getQualityColor(calculationType === 'bedtime' ? 6 - index : index + 4)}`}>
+                        {calculationType === 'bedtime' ? 6 - index : index + 4}
                       </div>
                     </div>
                   </div>
