@@ -10,19 +10,35 @@ import {
 } from '@/utils/sleepUtils';
 
 const SleepCalculator = () => {
-  const [calculationType, setCalculationType] = useState<'bedtime' | 'wakeup' | 'now'>('bedtime');
+  const [calculationType, setCalculationType] = useState<'bedtime' | 'wakeup' | 'now'>('now');
   const [wakeUpTime, setWakeUpTime] = useState<SleepTime>({ hours: 7, minutes: 0 });
   const [bedtime, setBedtime] = useState<SleepTime>({ hours: 22, minutes: 30 });
   const [currentTime, setCurrentTime] = useState<SleepTime>({ hours: 0, minutes: 0 });
   const [results, setResults] = useState<SleepTime[]>([]);
   const [hasCalculated, setHasCalculated] = useState(false);
 
-  // Set the current time when component mounts and when "If I sleep now" is selected
+  // Set the current time when component mounts, when "If I sleep now" is selected,
+  // or when any calculation type changes
   useEffect(() => {
     if (calculationType === 'now') {
       updateCurrentTime();
+      // Auto calculate when "If I sleep now" is selected
+      calculateResults();
     }
   }, [calculationType]);
+
+  // Auto calculate for bedtime and wakeup options when times change
+  useEffect(() => {
+    if (calculationType === 'bedtime') {
+      calculateResults();
+    }
+  }, [wakeUpTime]);
+
+  useEffect(() => {
+    if (calculationType === 'wakeup') {
+      calculateResults();
+    }
+  }, [bedtime]);
 
   const updateCurrentTime = () => {
     const now = new Date();
@@ -32,7 +48,7 @@ const SleepCalculator = () => {
     });
   };
 
-  const handleCalculate = () => {
+  const calculateResults = () => {
     if (calculationType === 'bedtime') {
       setResults(calculateBedTimes(wakeUpTime));
     } else if (calculationType === 'wakeup') {
@@ -123,14 +139,6 @@ const SleepCalculator = () => {
                 </p>
               </div>
             )}
-            
-            <button 
-              onClick={handleCalculate}
-              className="mt-4 w-full py-3 bg-primary hover:bg-primary/90 transition-all-200 rounded-lg flex items-center justify-center space-x-2 text-primary-foreground"
-            >
-              <span>Calculate</span>
-              <ArrowRight size={16} />
-            </button>
           </div>
           
           {hasCalculated && (
