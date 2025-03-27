@@ -3,6 +3,7 @@
 export const SLEEP_CYCLE_MINUTES = 90;
 export const MINUTES_IN_HOUR = 60;
 export const HOURS_IN_DAY = 24;
+export const DEFAULT_SLEEP_DELAY_MINUTES = 15;
 
 export interface SleepTime {
   hours: number;
@@ -20,9 +21,27 @@ export function formatTime(hours: number, minutes: number): string {
 }
 
 /**
+ * Add minutes to a time
+ */
+export function addMinutesToTime(time: SleepTime, minutesToAdd: number): SleepTime {
+  let totalMinutes = time.hours * MINUTES_IN_HOUR + time.minutes + minutesToAdd;
+  
+  // Handle day overflow
+  totalMinutes = totalMinutes % (HOURS_IN_DAY * MINUTES_IN_HOUR);
+  
+  const hours = Math.floor(totalMinutes / MINUTES_IN_HOUR);
+  const minutes = totalMinutes % MINUTES_IN_HOUR;
+  
+  return { hours, minutes };
+}
+
+/**
  * Calculate optimal wake-up times based on bedtime
  */
-export function calculateWakeUpTimes(bedtime: SleepTime): SleepTime[] {
+export function calculateWakeUpTimes(bedtime: SleepTime, sleepDelayMinutes: number = DEFAULT_SLEEP_DELAY_MINUTES): SleepTime[] {
+  // Add sleep delay to bedtime
+  const adjustedBedtime = addMinutesToTime(bedtime, sleepDelayMinutes);
+  
   // Calculate wake-up times for 2 through 7 sleep cycles
   const wakeUpTimes: SleepTime[] = [];
   
@@ -30,7 +49,7 @@ export function calculateWakeUpTimes(bedtime: SleepTime): SleepTime[] {
   // But we'll calculate 2-7 cycles for the calculator
   for (let cycles = 2; cycles <= 7; cycles++) {
     const totalMinutes = cycles * SLEEP_CYCLE_MINUTES;
-    const totalSleepMinutes = bedtime.hours * MINUTES_IN_HOUR + bedtime.minutes + totalMinutes;
+    const totalSleepMinutes = adjustedBedtime.hours * MINUTES_IN_HOUR + adjustedBedtime.minutes + totalMinutes;
     
     let wakeHours = Math.floor(totalSleepMinutes / MINUTES_IN_HOUR) % HOURS_IN_DAY;
     const wakeMinutes = totalSleepMinutes % MINUTES_IN_HOUR;
@@ -44,14 +63,14 @@ export function calculateWakeUpTimes(bedtime: SleepTime): SleepTime[] {
 /**
  * Calculate optimal bedtimes based on wake-up time
  */
-export function calculateBedTimes(wakeUpTime: SleepTime): SleepTime[] {
+export function calculateBedTimes(wakeUpTime: SleepTime, sleepDelayMinutes: number = DEFAULT_SLEEP_DELAY_MINUTES): SleepTime[] {
   // Calculate bedtimes for 2 through 7 sleep cycles
   const bedTimes: SleepTime[] = [];
   
   // Most adults need between 4-6 cycles (6-9 hours)
   // But we'll calculate 2-7 cycles for the calculator
   for (let cycles = 2; cycles <= 7; cycles++) {
-    const totalMinutes = cycles * SLEEP_CYCLE_MINUTES;
+    const totalMinutes = cycles * SLEEP_CYCLE_MINUTES + sleepDelayMinutes;
     
     // Convert wake-up time to minutes
     const wakeUpTotalMinutes = wakeUpTime.hours * MINUTES_IN_HOUR + wakeUpTime.minutes;

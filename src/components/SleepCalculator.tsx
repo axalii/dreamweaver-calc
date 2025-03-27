@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { Moon, Sun, ArrowRight } from 'lucide-react';
+import { Moon, Sun, ArrowRight, Clock } from 'lucide-react';
 import TimeInput from './TimeInput';
+import { Slider } from './ui/slider';
 import { 
   SleepTime,
   calculateBedTimes,
   calculateWakeUpTimes,
-  formatTime
+  formatTime,
+  DEFAULT_SLEEP_DELAY_MINUTES
 } from '@/utils/sleepUtils';
 
 const SleepCalculator = () => {
@@ -14,6 +16,7 @@ const SleepCalculator = () => {
   const [wakeUpTime, setWakeUpTime] = useState<SleepTime>({ hours: 7, minutes: 0 });
   const [bedtime, setBedtime] = useState<SleepTime>({ hours: 22, minutes: 30 });
   const [currentTime, setCurrentTime] = useState<SleepTime>({ hours: 0, minutes: 0 });
+  const [sleepDelay, setSleepDelay] = useState<number>(DEFAULT_SLEEP_DELAY_MINUTES);
   const [results, setResults] = useState<SleepTime[]>([]);
   const [hasCalculated, setHasCalculated] = useState(false);
 
@@ -23,27 +26,27 @@ const SleepCalculator = () => {
     calculateResults();
   }, []);
 
-  // Re-calculate when calculation type changes
+  // Re-calculate when calculation type or sleep delay changes
   useEffect(() => {
     if (calculationType === 'now') {
       updateCurrentTime();
     }
     calculateResults();
-  }, [calculationType]);
+  }, [calculationType, sleepDelay]);
 
   // Auto calculate for bedtime when wakeup time changes
   useEffect(() => {
     if (calculationType === 'bedtime') {
       calculateResults();
     }
-  }, [wakeUpTime]);
+  }, [wakeUpTime, sleepDelay]);
 
   // Auto calculate for wakeup when bedtime changes
   useEffect(() => {
     if (calculationType === 'wakeup') {
       calculateResults();
     }
-  }, [bedtime]);
+  }, [bedtime, sleepDelay]);
 
   const updateCurrentTime = () => {
     const now = new Date();
@@ -55,13 +58,13 @@ const SleepCalculator = () => {
 
   const calculateResults = () => {
     if (calculationType === 'bedtime') {
-      setResults(calculateBedTimes(wakeUpTime));
+      setResults(calculateBedTimes(wakeUpTime, sleepDelay));
     } else if (calculationType === 'wakeup') {
-      setResults(calculateWakeUpTimes(bedtime));
+      setResults(calculateWakeUpTimes(bedtime, sleepDelay));
     } else if (calculationType === 'now') {
       // If "If I sleep now" is selected, calculate wake-up times using the current time
       updateCurrentTime(); // Refresh current time right before calculation
-      setResults(calculateWakeUpTimes(currentTime));
+      setResults(calculateWakeUpTimes(currentTime, sleepDelay));
     }
     setHasCalculated(true);
   };
@@ -128,50 +131,51 @@ const SleepCalculator = () => {
   };
 
   return (
-    <section id="calculator" className="min-h-screen py-24 px-6">
+    <section id="calculator" className="py-10 px-6">
       <div className="container max-w-4xl mx-auto">
-        <div className="text-center mb-12 animate-slide-down opacity-0" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient">Sleep Calculator</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Our sleep calculator helps you determine the optimal times to fall asleep or wake up based on sleep cycles.
-            Each cycle lasts approximately 90 minutes.
+        <div className="text-center mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gradient">Sleep Cycle Calculator</h2>
+          <p className="text-muted-foreground">
+            Calculate optimal sleep times based on 90-minute sleep cycles.
           </p>
         </div>
 
-        <div className="glass rounded-2xl overflow-hidden shadow-xl animate-fade-in opacity-0" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
-          <div className="flex flex-wrap justify-between p-5 glass border-b border-white/10">
+        <div className="glass rounded-xl overflow-hidden shadow-xl">
+          {/* Calculation Type Selection */}
+          <div className="flex flex-wrap md:flex-nowrap justify-between p-4 glass border-b border-white/10">
             <button 
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all-200 ${
+              className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-lg transition-all-200 m-1 ${
                 calculationType === 'bedtime' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => toggleCalculationType('bedtime')}
             >
-              <Moon size={18} className={calculationType === 'bedtime' ? 'text-primary' : 'text-muted-foreground'} />
-              <span>I want to wake up at...</span>
+              <Moon size={16} className={calculationType === 'bedtime' ? 'text-primary' : 'text-muted-foreground'} />
+              <span className="text-sm">Wake up at...</span>
             </button>
             
             <button 
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all-200 ${
+              className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-lg transition-all-200 m-1 ${
                 calculationType === 'wakeup' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => toggleCalculationType('wakeup')}
             >
-              <Sun size={18} className={calculationType === 'wakeup' ? 'text-primary' : 'text-muted-foreground'} />
-              <span>I want to go to bed at...</span>
+              <Sun size={16} className={calculationType === 'wakeup' ? 'text-primary' : 'text-muted-foreground'} />
+              <span className="text-sm">Go to bed at...</span>
             </button>
 
             <button 
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all-200 ${
+              className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-lg transition-all-200 m-1 ${
                 calculationType === 'now' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => toggleCalculationType('now')}
             >
-              <Sun size={18} className={calculationType === 'now' ? 'text-primary' : 'text-muted-foreground'} />
-              <span>If I sleep now...</span>
+              <Clock size={16} className={calculationType === 'now' ? 'text-primary' : 'text-muted-foreground'} />
+              <span className="text-sm">Sleep now</span>
             </button>
           </div>
           
-          <div className="p-6">
+          <div className="p-5">
+            {/* Time Input for Bedtime and Wakeup modes */}
             {calculationType === 'bedtime' && (
               <TimeInput 
                 id="wakeup-time"
@@ -191,29 +195,46 @@ const SleepCalculator = () => {
             )}
 
             {calculationType === 'now' && (
-              <div className="py-3">
-                <p className="text-center text-lg">
+              <div className="py-2">
+                <p className="text-center">
                   Current time: <span className="font-medium">{formatTime(currentTime.hours, currentTime.minutes)}</span>
-                </p>
-                <p className="text-muted-foreground text-center text-sm mt-2">
-                  We'll calculate the best times to wake up if you fall asleep now.
                 </p>
               </div>
             )}
+
+            {/* Sleep Delay Slider */}
+            <div className="mt-4">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-foreground/90">
+                  Time to fall asleep: <span className="font-bold text-primary">{sleepDelay} minutes</span>
+                </label>
+              </div>
+              <Slider
+                defaultValue={[sleepDelay]}
+                min={5}
+                max={30}
+                step={1}
+                onValueChange={(value) => setSleepDelay(value[0])}
+                className="my-4"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Average person takes about 15 minutes to fall asleep.
+              </p>
+            </div>
           </div>
           
           {hasCalculated && (
-            <div className="p-6 bg-secondary/50 animate-fade-in">
-              <h3 className="text-xl font-medium mb-4">
+            <div className="p-5 bg-secondary/30 animate-fade-in">
+              <h3 className="text-lg font-medium mb-3">
                 {calculationType === 'bedtime' 
                   ? 'Recommended bedtimes:' 
                   : 'Recommended wake-up times:'}
               </h3>
               
               {/* Display results in two rows */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* First row - cycles 7, 6, 5 */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2">
                   {getDisplayResults().firstRow.map((time, index) => {
                     // For first row, cycles are 7, 6, 5
                     const cycleNum = 7 - index;
@@ -221,18 +242,18 @@ const SleepCalculator = () => {
                     return (
                       <div 
                         key={`row1-${index}`} 
-                        className="glass p-4 rounded-lg border border-white/10 hover:border-primary/40 transition-all-200"
+                        className="glass p-3 rounded-lg border border-white/10 hover:border-primary/40 transition-all-200"
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-xl font-medium">
+                            <p className="text-lg font-medium">
                               {formatTime(time.hours, time.minutes)}
                             </p>
-                            <p className="text-muted-foreground text-sm">
-                              {cycleNum} sleep cycles • {cycleNum * 1.5} hours of sleep
+                            <p className="text-muted-foreground text-xs">
+                              {cycleNum} cycles • {cycleNum * 1.5}h
                             </p>
                           </div>
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getQualityColor(cycleNum)}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getQualityColor(cycleNum)}`}>
                             {cycleNum}
                           </div>
                         </div>
@@ -242,7 +263,7 @@ const SleepCalculator = () => {
                 </div>
                 
                 {/* Second row - cycles 4, 3, 2 */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2">
                   {getDisplayResults().secondRow.map((time, index) => {
                     // For second row, cycles are 4, 3, 2
                     const cycleNum = 4 - index;
@@ -250,18 +271,18 @@ const SleepCalculator = () => {
                     return (
                       <div 
                         key={`row2-${index}`} 
-                        className="glass p-4 rounded-lg border border-white/10 hover:border-primary/40 transition-all-200"
+                        className="glass p-3 rounded-lg border border-white/10 hover:border-primary/40 transition-all-200"
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-xl font-medium">
+                            <p className="text-lg font-medium">
                               {formatTime(time.hours, time.minutes)}
                             </p>
-                            <p className="text-muted-foreground text-sm">
-                              {cycleNum} sleep cycles • {cycleNum * 1.5} hours of sleep
+                            <p className="text-muted-foreground text-xs">
+                              {cycleNum} cycles • {cycleNum * 1.5}h
                             </p>
                           </div>
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getQualityColor(cycleNum)}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getQualityColor(cycleNum)}`}>
                             {cycleNum}
                           </div>
                         </div>
@@ -271,11 +292,21 @@ const SleepCalculator = () => {
                 </div>
               </div>
               
-              <p className="mt-6 text-muted-foreground text-sm">
-                For optimal sleep, aim for 5-6 complete sleep cycles. Most adults need between 7.5-9 hours of sleep per night.
+              <p className="mt-4 text-muted-foreground text-xs">
+                For optimal sleep, aim for 5-6 complete sleep cycles (7.5-9 hours).
               </p>
             </div>
           )}
+        </div>
+        
+        <div className="mt-6 p-4 glass rounded-lg">
+          <h3 className="text-lg font-medium mb-2">Quick Facts</h3>
+          <ul className="list-disc pl-5 text-sm space-y-1 text-muted-foreground">
+            <li>Each sleep cycle lasts approximately 90 minutes</li>
+            <li>Most adults need 5-6 complete cycles (7.5-9 hours)</li>
+            <li>Waking up between cycles helps you feel more refreshed</li>
+            <li>The average person takes about 15 minutes to fall asleep</li>
+          </ul>
         </div>
       </div>
     </section>
