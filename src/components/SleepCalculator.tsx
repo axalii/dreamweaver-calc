@@ -66,6 +66,23 @@ const SleepCalculator = () => {
     setHasCalculated(false);
   };
 
+  // Create two rows of results for display
+  const getDisplayResults = () => {
+    if (calculationType === 'bedtime') {
+      // For bedtime calculation, we already have cycles in descending order (6-5-4-3)
+      // So we can just split them into two groups
+      const firstRow = results.slice(0, 2);  // 6, 5 cycles
+      const secondRow = results.slice(2);    // 4, 3 cycles
+      return { firstRow, secondRow };
+    } else {
+      // For wakeup and now calculations, reorganize to show 7-6-5 and 4-3-2 cycles
+      const reordered = [...results].reverse(); // Reverse to get highest cycles first
+      const firstRow = reordered.slice(0, 3);   // 7, 6, 5 cycles
+      const secondRow = reordered.slice(3);     // 4, 3, 2, 1 cycles
+      return { firstRow, secondRow };
+    }
+  };
+
   return (
     <section id="calculator" className="min-h-screen py-24 px-6">
       <div className="container max-w-4xl mx-auto">
@@ -149,29 +166,67 @@ const SleepCalculator = () => {
                   : 'Recommended wake-up times:'}
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {results.map((time, index) => (
-                  <div 
-                    key={index} 
-                    className="glass p-4 rounded-lg border border-white/10 hover:border-primary/40 transition-all-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xl font-medium">
-                          {formatTime(time.hours, time.minutes)}
-                        </p>
-                        <p className="text-muted-foreground text-sm">
-                          {calculationType === 'bedtime' 
-                            ? `${6 - index} sleep cycles • ${(6 - index) * 1.5} hours of sleep`
-                            : `${index + 4} sleep cycles • ${(index + 4) * 1.5} hours of sleep`}
-                        </p>
+              {/* Display results in two rows */}
+              <div className="space-y-4">
+                {/* First row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {getDisplayResults().firstRow.map((time, index) => {
+                    const cycleNum = calculationType === 'bedtime'
+                      ? 6 - index  // For bedtime, cycles start at 6
+                      : 7 - index;  // For wakeup/now, cycles start at 7 (after reversing)
+                    
+                    return (
+                      <div 
+                        key={`row1-${index}`} 
+                        className="glass p-4 rounded-lg border border-white/10 hover:border-primary/40 transition-all-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xl font-medium">
+                              {formatTime(time.hours, time.minutes)}
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                              {cycleNum} sleep cycles • {cycleNum * 1.5} hours of sleep
+                            </p>
+                          </div>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getQualityColor(cycleNum)}`}>
+                            {cycleNum}
+                          </div>
+                        </div>
                       </div>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getQualityColor(calculationType === 'bedtime' ? 6 - index : index + 4)}`}>
-                        {calculationType === 'bedtime' ? 6 - index : index + 4}
+                    );
+                  })}
+                </div>
+                
+                {/* Second row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {getDisplayResults().secondRow.map((time, index) => {
+                    const cycleNum = calculationType === 'bedtime'
+                      ? 4 - index  // For bedtime, second row starts at 4
+                      : 4 - index;  // For wakeup/now, second row starts at 4
+                    
+                    return (
+                      <div 
+                        key={`row2-${index}`} 
+                        className="glass p-4 rounded-lg border border-white/10 hover:border-primary/40 transition-all-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xl font-medium">
+                              {formatTime(time.hours, time.minutes)}
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                              {cycleNum} sleep cycles • {cycleNum * 1.5} hours of sleep
+                            </p>
+                          </div>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getQualityColor(cycleNum)}`}>
+                            {cycleNum}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
               
               <p className="mt-6 text-muted-foreground text-sm">
