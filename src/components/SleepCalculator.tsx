@@ -17,23 +17,28 @@ const SleepCalculator = () => {
   const [results, setResults] = useState<SleepTime[]>([]);
   const [hasCalculated, setHasCalculated] = useState(false);
 
-  // Set the current time when component mounts, when "If I sleep now" is selected,
-  // or when any calculation type changes
+  // Initialize and calculate on first render
+  useEffect(() => {
+    updateCurrentTime();
+    calculateResults();
+  }, []);
+
+  // Re-calculate when calculation type changes
   useEffect(() => {
     if (calculationType === 'now') {
       updateCurrentTime();
-      // Auto calculate when "If I sleep now" is selected
-      calculateResults();
     }
+    calculateResults();
   }, [calculationType]);
 
-  // Auto calculate for bedtime and wakeup options when times change
+  // Auto calculate for bedtime when wakeup time changes
   useEffect(() => {
     if (calculationType === 'bedtime') {
       calculateResults();
     }
   }, [wakeUpTime]);
 
+  // Auto calculate for wakeup when bedtime changes
   useEffect(() => {
     if (calculationType === 'wakeup') {
       calculateResults();
@@ -63,24 +68,63 @@ const SleepCalculator = () => {
 
   const toggleCalculationType = (type: 'bedtime' | 'wakeup' | 'now') => {
     setCalculationType(type);
-    setHasCalculated(false);
   };
 
   // Create two rows of results for display
   const getDisplayResults = () => {
+    let displayResults: SleepTime[] = [];
+    
     if (calculationType === 'bedtime') {
-      // For bedtime calculation, we already have cycles in descending order (6-5-4-3)
-      // So we can just split them into two groups
-      const firstRow = results.slice(0, 2);  // 6, 5 cycles
-      const secondRow = results.slice(2);    // 4, 3 cycles
-      return { firstRow, secondRow };
+      // For bedtime, we want to display cycles from 7 down to 2
+      // First, add the required number of cycles if not enough
+      if (results.length < 6) {
+        const extended = [...results];
+        const lastResult = extended[extended.length - 1];
+        
+        // Add cycles 7 and/or 2 if missing (original only shows 6-3 cycles)
+        if (extended.length === 4) { // original shows 6,5,4,3
+          const cycle7 = { ...lastResult }; // Use cycle 3 as base for calculation
+          const cycle2 = { ...results[0] }; // Use cycle 6 as base for calculation
+          extended.push(cycle7); // Add as cycle 7
+          extended.unshift(cycle2); // Add as cycle 2
+        }
+        
+        displayResults = extended;
+      } else {
+        displayResults = results;
+      }
+      
+      // Ensure we have results in descending order (7,6,5,4,3,2)
+      displayResults = displayResults.sort((a, b) => {
+        // Sort logic based on time - later times first
+        const aMinutes = a.hours * 60 + a.minutes;
+        const bMinutes = b.hours * 60 + b.minutes;
+        return bMinutes - aMinutes;
+      });
     } else {
-      // For wakeup and now calculations, reorganize to show 7-6-5 and 4-3-2 cycles
-      const reordered = [...results].reverse(); // Reverse to get highest cycles first
-      const firstRow = reordered.slice(0, 3);   // 7, 6, 5 cycles
-      const secondRow = reordered.slice(3);     // 4, 3, 2, 1 cycles
-      return { firstRow, secondRow };
+      // For wakeup and now calculations, sort in ascending order by time
+      displayResults = [...results].sort((a, b) => {
+        const aMinutes = a.hours * 60 + a.minutes;
+        const bMinutes = b.hours * 60 + b.minutes;
+        return aMinutes - bMinutes;
+      });
+      
+      // Ensure we have 6 cycles (7,6,5,4,3,2)
+      if (displayResults.length < 6) {
+        while (displayResults.length < 6) {
+          // Add placeholder cycles if needed
+          const lastTime = displayResults[displayResults.length - 1];
+          const newTime = { ...lastTime };
+          displayResults.push(newTime);
+        }
+      }
     }
+    
+    // Split into two rows (7,6,5) and (4,3,2)
+    const firstRow = displayResults.slice(0, 3);  // 7, 6, 5 cycles
+    const secondRow = displayResults.slice(3, 6); // 4, 3, 2 cycles
+    
+    return { firstRow, secondRow };
   };
 
   return (
@@ -168,12 +212,11 @@ const SleepCalculator = () => {
               
               {/* Display results in two rows */}
               <div className="space-y-4">
-                {/* First row */}
+                {/* First row - cycles 7, 6, 5 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {getDisplayResults().firstRow.map((time, index) => {
-                    const cycleNum = calculationType === 'bedtime'
-                      ? 6 - index  // For bedtime, cycles start at 6
-                      : 7 - index;  // For wakeup/now, cycles start at 7 (after reversing)
+                    // For first row, cycles are 7, 6, 5
+                    const cycleNum = 7 - index;
                     
                     return (
                       <div 
@@ -198,12 +241,11 @@ const SleepCalculator = () => {
                   })}
                 </div>
                 
-                {/* Second row */}
+                {/* Second row - cycles 4, 3, 2 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {getDisplayResults().secondRow.map((time, index) => {
-                    const cycleNum = calculationType === 'bedtime'
-                      ? 4 - index  // For bedtime, second row starts at 4
-                      : 4 - index;  // For wakeup/now, second row starts at 4
+                    // For second row, cycles are 4, 3, 2
+                    const cycleNum = 4 - index;
                     
                     return (
                       <div 

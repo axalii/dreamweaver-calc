@@ -23,11 +23,12 @@ export function formatTime(hours: number, minutes: number): string {
  * Calculate optimal wake-up times based on bedtime
  */
 export function calculateWakeUpTimes(bedtime: SleepTime): SleepTime[] {
-  // Calculate wake-up times for 4, 5, 6, and 7 sleep cycles
+  // Calculate wake-up times for 2 through 7 sleep cycles
   const wakeUpTimes: SleepTime[] = [];
   
   // Most adults need between 4-6 cycles (6-9 hours)
-  for (let cycles = 4; cycles <= 7; cycles++) {
+  // But we'll calculate 2-7 cycles for the calculator
+  for (let cycles = 2; cycles <= 7; cycles++) {
     const totalMinutes = cycles * SLEEP_CYCLE_MINUTES;
     const totalSleepMinutes = bedtime.hours * MINUTES_IN_HOUR + bedtime.minutes + totalMinutes;
     
@@ -44,11 +45,12 @@ export function calculateWakeUpTimes(bedtime: SleepTime): SleepTime[] {
  * Calculate optimal bedtimes based on wake-up time
  */
 export function calculateBedTimes(wakeUpTime: SleepTime): SleepTime[] {
-  // Calculate bedtimes for 4, 5, 6, and 7 sleep cycles
+  // Calculate bedtimes for 2 through 7 sleep cycles
   const bedTimes: SleepTime[] = [];
   
   // Most adults need between 4-6 cycles (6-9 hours)
-  for (let cycles = 4; cycles <= 7; cycles++) {
+  // But we'll calculate 2-7 cycles for the calculator
+  for (let cycles = 2; cycles <= 7; cycles++) {
     const totalMinutes = cycles * SLEEP_CYCLE_MINUTES;
     
     // Convert wake-up time to minutes
@@ -68,7 +70,7 @@ export function calculateBedTimes(wakeUpTime: SleepTime): SleepTime[] {
     bedTimes.push({ hours: bedHours, minutes: bedMinutes });
   }
   
-  // Reverse so we show earliest bedtime first
+  // We want results in order of cycle count (7 to 2)
   return bedTimes.reverse();
 }
 
