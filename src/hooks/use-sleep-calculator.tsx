@@ -53,15 +53,19 @@ export function useSleepCalculator() {
   };
 
   const calculateResults = () => {
+    let newResults: SleepTime[] = [];
+    
     if (calculationType === 'bedtime') {
-      setResults(calculateBedTimes(wakeUpTime, sleepDelay));
+      newResults = calculateBedTimes(wakeUpTime, sleepDelay);
     } else if (calculationType === 'wakeup') {
-      setResults(calculateWakeUpTimes(bedtime, sleepDelay));
+      newResults = calculateWakeUpTimes(bedtime, sleepDelay);
     } else if (calculationType === 'now') {
       // If "If I sleep now" is selected, calculate wake-up times using the current time
       updateCurrentTime(); // Refresh current time right before calculation
-      setResults(calculateWakeUpTimes(currentTime, sleepDelay));
+      newResults = calculateWakeUpTimes(currentTime, sleepDelay);
     }
+    
+    setResults(newResults);
     setHasCalculated(true);
   };
 
